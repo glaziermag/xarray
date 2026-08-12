@@ -22,7 +22,7 @@ jobs:
     name: detect ci trigger
     runs-on: ubuntu-slim
     if: |
-      github.repository == 'pydata/xarray'
+      github.repository == 'glaziermag/xarray'
       && (github.event_name == 'push' || github.event_name == 'pull_request')
       && !contains(github.event.pull_request.labels.*.name, 'skip-ci')
     outputs:
