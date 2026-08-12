@@ -23,7 +23,7 @@ jobs:
     runs-on: ubuntu-slim
     if: |
       github.repository == 'glaziermag/xarray'
-      && (github.event_name == 'push' || github.event_name == 'pull_request')
+      && (github.event_name == 'push' || github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch')
       && !contains(github.event.pull_request.labels.*.name, 'skip-ci')
     outputs:
       triggered: ${{ steps.detect-trigger.outputs.trigger-found }}
@@ -40,7 +40,7 @@ jobs:
 
   cache-pixi-lock:
     needs: detect-ci-trigger
-    if: needs.detect-ci-trigger.outputs.triggered == 'false'
+    if: needs.detect-ci-trigger.outputs.triggered == 'false' || github.event_name == 'workflow_dispatch'
 
     runs-on: ubuntu-latest
 
