@@ -69,6 +69,11 @@ Bug Fixes
   for zarr writes. Existing zarr stores written with the old ``int8`` encoding
   are still read correctly. (:issue:`2937`, :pull:`11318`)
   By `Evan Lyall <https://github.com/elyall>`_.
+- Raise an informative ``TypeError`` when a :py:class:`~xarray.Coordinates` object is
+  passed as a coordinate value, e.g. ``ds.assign_coords({"x": coords})``, instead
+  of silently creating a broken coordinate. Pass the object directly with
+  ``ds.assign_coords(coords)`` (:issue:`10194`).
+  By `NoiceHex <https://github.com/NoiceHax>`_.
 
 
 Documentation
@@ -362,6 +367,13 @@ Internal Changes
   runtime behavior. This enables CI integration for type stub validation and helps
   prevent type annotation regressions (:issue:`11086`).
   By `Kristian Kollsgård <https://github.com/kkollsga>`_.
+- Add flox support for :py:meth:`DataArray.groupby().median`,
+  :py:meth:`Dataset.groupby().median`, :py:meth:`DataArray.resample().median`, and
+  :py:meth:`Dataset.resample().median`. This significantly speeds up median reductions
+  when flox is installed by using flox's blockwise implementation, including
+  rechunking when needed. (:issue:`11238`, :pull:`11239`). By `Samuel Le Meur-Diebolt
+  <https://github.com/sdiebolt>`_.
+
 - Remove ``setup.py`` file (:pull:`11261`).
   By `Nick Hodgskin <https://github.com/VeckoTheGecko>`_.
 
