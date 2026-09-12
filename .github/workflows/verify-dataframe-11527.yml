@@ -31,7 +31,7 @@ jobs:
       - name: Existing conversion tests on clean baseline
         run: python -m pytest xarray/tests/test_dataset.py -k 'dataframe or series' -q
       - name: Full Dataset baseline in the affected pandas 3 environment
-        if: contains(matrix.pandas, ">=3")
+        if: contains(matrix.pandas, '>=3')
         run: python -m pytest xarray/tests/test_dataset.py -q -n 2
       - name: Reproduce reported assignment on clean baseline
         run: python verification/reproduce.py baseline
@@ -44,10 +44,10 @@ jobs:
       - name: Reproduce reported assignment after fix
         run: python verification/reproduce.py fixed
       - name: Dataset tests after fix in pandas 3
-        if: contains(matrix.pandas, ">=3")
+        if: contains(matrix.pandas, '>=3')
         run: python -m pytest xarray/tests/test_dataset.py -q -n 2
       - name: Conversion compatibility after fix in pandas 2
-        if: contains(matrix.pandas, ">=2.2")
+        if: contains(matrix.pandas, '>=2.2')
         run: python -m pytest xarray/tests/test_dataset.py -k 'dataframe or series' -q
       - name: Changed Python style
         run: |
