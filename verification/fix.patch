@@ -1,0 +1,11 @@
+--- a/xarray/core/dataset.py
++++ b/xarray/core/dataset.py
+@@ -7509,6 +7509,8 @@
+     ) -> None:
+         if not isinstance(idx, pd.MultiIndex):
+             for name, values in arrays:
++                if not values.flags.writeable:
++                    values = values.copy()
+                 self[name] = (dims, values)
+             return
+ 
