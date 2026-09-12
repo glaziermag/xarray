@@ -30,6 +30,9 @@ jobs:
         run: git diff --exit-code 8de862c29544c2fb1957ce20985745952bc81de7 -- xarray doc
       - name: Existing conversion tests on clean baseline
         run: python -m pytest xarray/tests/test_dataset.py -k 'dataframe or series' -q
+      - name: Full Dataset baseline in the affected pandas 3 environment
+        if: contains(matrix.pandas, ">=3")
+        run: python -m pytest xarray/tests/test_dataset.py -q -n 2
       - name: Reproduce reported assignment on clean baseline
         run: python verification/reproduce.py baseline
       - name: Regression test fails on pandas 3 before fix
@@ -40,8 +43,12 @@ jobs:
         run: git apply verification/fix.patch
       - name: Reproduce reported assignment after fix
         run: python verification/reproduce.py fixed
-      - name: Dataset tests after fix
+      - name: Dataset tests after fix in pandas 3
+        if: contains(matrix.pandas, ">=3")
         run: python -m pytest xarray/tests/test_dataset.py -q -n 2
+      - name: Conversion compatibility after fix in pandas 2
+        if: contains(matrix.pandas, ">=2.2")
+        run: python -m pytest xarray/tests/test_dataset.py -k 'dataframe or series' -q
       - name: Changed Python style
         run: |
           ruff check xarray/core/dataset.py xarray/tests/test_dataset.py

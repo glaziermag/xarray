@@ -12,7 +12,8 @@ try:
     data["lon"].loc[{"location": data.lon.isnull()}] = 14.3
 except ValueError as error:
     print(f"{type(error).__name__}: {error}", flush=True)
-    assert expect_failure and "read-only" in str(error), str(error)
+    assert expect_failure and error.__cause__ is not None
+    assert "read-only" in str(error.__cause__), str(error.__cause__)
 else:
     assert not expect_failure, "Expected the reported pandas 3 regression"
     np.testing.assert_allclose(data.lon.values, [15.43, 14.3, 14.3, 14.67])
