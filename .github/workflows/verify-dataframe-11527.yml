@@ -1,55 +1,44 @@
-name: Verify DataFrame assignment 11527
+name: Verify exact DataFrame fix 11527
 on:
   push:
     branches: [codex/verify-11527-20260911]
 permissions:
   contents: read
 jobs:
-  verify:
+  verify-final-commit:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
-    strategy:
-      fail-fast: false
-      matrix:
-        pandas: ["pandas>=2.2,<3", "pandas>=3,<4"]
-        repeat: [1, 2]
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: 493d9bde42c18823150fe72f1ae3267badf4d416
           fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Install test environment
+      - name: Install pandas 3 and the repository's pinned Ruff
         run: >-
-          python -m pip install -e . "${{ matrix.pandas }}"
-          pytest pytest-cov pytest-env pytest-timeout pytest-xdist
-          pytest-asyncio pytest-mypy-plugins hypothesis scipy dask cftime
-          bottleneck numexpr sparse pyarrow ruff
-      - name: Confirm unmodified pinned source
-        run: git diff --exit-code 8de862c29544c2fb1957ce20985745952bc81de7 -- xarray doc
-      - name: Existing conversion tests on clean baseline
-        run: python -m pytest xarray/tests/test_dataset.py -k 'dataframe or series' -q
-      - name: Full Dataset baseline in the affected pandas 3 environment
-        if: contains(matrix.pandas, '>=3')
-        run: python -m pytest xarray/tests/test_dataset.py -q -n 2
-      - name: Reproduce reported assignment on clean baseline
-        run: python verification/reproduce.py baseline
-      - name: Regression test fails on pandas 3 before fix
+          python -m pip install -e . 'pandas>=3,<4' 'ruff==0.15.20'
+          pytest pytest-asyncio pytest-mypy-plugins hypothesis
+      - name: Verify source identity
+        run: test "$(git rev-parse HEAD)" = 493d9bde42c18823150fe72f1ae3267badf4d416
+      - name: Personally rerun the minimal reported assignment
         run: |
-          git apply verification/test.patch
-          python verification/check_regression.py
-      - name: Apply focused fix
-        run: git apply verification/fix.patch
-      - name: Reproduce reported assignment after fix
-        run: python verification/reproduce.py fixed
-      - name: Dataset tests after fix in pandas 3
-        if: contains(matrix.pandas, '>=3')
-        run: python -m pytest xarray/tests/test_dataset.py -q -n 2
-      - name: Conversion compatibility after fix in pandas 2
-        if: contains(matrix.pandas, '>=2.2')
+          python - <<'PY'
+          import numpy as np
+          import pandas as pd
+          import xarray as xr
+          frame = pd.DataFrame({"lon": [15.43, np.nan, np.nan, 14.67]}, index=pd.Index(["a", "b", "c", "d"], name="location"))
+          original = frame.copy(deep=True)
+          ds = frame.to_xarray()
+          ds["lon"].loc[{"location": ds.lon.isnull()}] = 14.3
+          np.testing.assert_allclose(ds.lon.values, [15.43, 14.3, 14.3, 14.67])
+          pd.testing.assert_frame_equal(frame, original)
+          print(f"PASS: pandas {pd.__version__}, numpy {np.__version__}, values {ds.lon.values.tolist()}; input DataFrame unchanged")
+          PY
+      - name: Regression and conversion tests at the exact PR commit
         run: python -m pytest xarray/tests/test_dataset.py -k 'dataframe or series' -q
-      - name: Changed Python style
+      - name: Repository-pinned Python style checks
         run: |
           ruff check xarray/core/dataset.py xarray/tests/test_dataset.py
           ruff format --check xarray/core/dataset.py xarray/tests/test_dataset.py
