@@ -1,0 +1,30 @@
+name: Publisher permission reproduction
+on:
+  push:
+    branches: [codex/repro-publisher-permission-20260918]
+permissions: {}
+jobs:
+  baseline:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Reproduce missing checks permission
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set +e
+          output=$(gh api --method POST "repos/$GITHUB_REPOSITORY/check-runs" -f name=publisher-permission-repro -f head_sha="$GITHUB_SHA" -f status=completed -f conclusion=success 2>&1)
+          status=$?
+          set -e
+          printf '%s\n' "$output"
+          test "$status" -ne 0
+          printf '%s\n' "$output" | grep -F 'HTTP 403'
+  control:
+    runs-on: ubuntu-latest
+    permissions:
+      checks: write
+    steps:
+      - name: Verify checks write permits the same request
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api --method POST "repos/$GITHUB_REPOSITORY/check-runs" -f name=publisher-permission-control -f head_sha="$GITHUB_SHA" -f status=completed -f conclusion=success --jq '{name, conclusion, status}'
